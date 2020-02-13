@@ -18,7 +18,7 @@ function StockHandler() {
     .catch(error => {
       console.log("Errcode", error.statusCode);
       if (error.response) {
-        console.log("error ", url, error.response);
+        console.log("error ", url);
         callback('error', {error: 'external source error'});
        }
     });

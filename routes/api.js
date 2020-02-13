@@ -32,7 +32,9 @@ module.exports = function (app) {
       }
 
       function finish(dataSource, data) {
-        if (dataSource == 'stockData') {
+        if (dataSource == 'error') {
+          stockData = [data];
+        } else if (dataSource == 'stockData') {
           stockData = data;
         } else {
           likeData = data;
