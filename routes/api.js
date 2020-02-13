@@ -30,41 +30,36 @@ module.exports = function (app) {
       if (Array.isArray(stock)) {
         multiple = true;
       }
-       // console.log("COL", stock, like, ip);
-
 
       function finish(dataSource, data) {
         if (dataSource == 'stockData') {
           stockData = data;
         } else {
-          console.log('likesdata', multiple, stockData ? stockData.length : 0, data.length, " + ", data);
-          // stockData.likes = data.likes;
-
-          if (multiple && stockData.length == 2 && data.length == 2) {
-            console.log("not here?",stockData[0].stock, data[0].stock);
-            if (stockData[0].stock == data[0].stock) {
-              stockData[0].rel_likes = data[0].likes - data[1].likes;
-              stockData[1].rel_likes = data[1].likes - data[0].likes;
+          likeData = data;
+        }
+        if (stockData && likeData) {
+          if (multiple && stockData.length == 2 && likeData.length == 2) {
+            if (stockData[0].stock == likeData[0].stock) {
+              stockData[0].rel_likes = likeData[0].likes - likeData[1].likes;
+              stockData[1].rel_likes = likeData[1].likes - likeData[0].likes;
             } else {
-              stockData[0].rel_likes = data[1].likes - data[0].likes;
-              stockData[1].rel_likes = data[0].likes - data[1].likes;
+              stockData[0].rel_likes = likeData[1].likes - likeData[0].likes;
+              stockData[1].rel_likes = likeData[0].likes - likeData[1].likes;
             }
-          } else {
-             stockData[0].likes = data[0].likes;
+          } else if (stockData.length == 1 && likeData.length == 1) {
+             stockData[0].likes = likeData[0].likes;
           }
           res.json({'stockData': stockData});
         }
-        //{"stockData":{"stock":"GOOG","price":"786.90","likes":1}}
-
       };
 
 
       if (multiple) {
         stockPrices.getData(stock, finish);
-         stockPrices.getLikes(stock, ip, like, finish);
+        stockPrices.getLikes(stock, ip, like, finish);
       } else {
         stockPrices.getData([stock], finish);
-         stockPrices.getLikes([stock], ip, like, finish);
+        stockPrices.getLikes([stock], ip, like, finish);
       }
 
     });

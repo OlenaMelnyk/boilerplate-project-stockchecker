@@ -33,64 +33,60 @@ function StockHandler() {
       let database = client.db("test");
       var collection = database.collection("stock_likes");
         if (!likes) {
-          let resp = [];
-          if (stock.length == 2) {
-            const promise1 = new Promise(function(resolve, reject) {
-              let el = stock[0].toUpperCase();
-              collection.find({stock:el}).toArray((err, docs) => {
-              var like = 0;
-              if (docs.length && docs[0].length > 0) {
-                like = docs[0].likes.length;
-              }
-              resolve({stock: el, likes: like});
-              });
-            });
-            const promise2 = new Promise(function(resolve, reject) {
-              let el = stock[1].toUpperCase();
-              collection.find({stock:el}).toArray((err, docs) => {
-              var like = 0;
-              if (docs.length && docs[0].length > 0) {
-                like = docs[0].likes.length;
-              }
-              resolve({stock: el, likes: like});
-              });
-            });
-            Promise.all([promise1, promise2])
+          let promises = [];
+          for (let el of stock) {
+            promises.push(findPromise(collection, el));
+          }
+          Promise.all(promises)
             .then(values => {
               callback('likesData', values);
             })
             .catch(error => {
               console.log("Err:", error);
             });
-          } else if (stock.length == 1) {
-              let el = stock[0].toUpperCase();
-              collection.find({stock:el}).toArray((err, docs) => {
-              var like = 0;
-              if (docs.length && docs[0].length > 0) {
-                like = docs[0].likes.length;
-              }
-              resp.push({stock: el, likes: true});
-                // console.log("Resp:", resp);
-              callback('likesData', {stock: el, likes: like});
-            });
-          }
+
         } else {
           let resp = [];
-          // for (let el of stock) {
-          //   collection.findAndModify(
-          //     { stock: el },
-          //     [],
-          //     { $addToSet: { likes: ip } },
-          //     { new: true, upsert: true },
-          //     function(err, doc) {
-          //       resp.push({stock: el, likes: doc.value.likes.length});
-          //     }
-          //   );
-          // }
-          console.log("LIKES", resp);
-          callback('likesData', resp);
+          let promises = [];
+          for (let el of stock) {
+            promises.push(findAndModifyPromise(collection, el, ip));
+          }
+          Promise.all(promises)
+            .then(values => {
+              callback('likesData', values);
+            })
+            .catch(error => {
+              console.log("Err:", error);
+            });
         }
     });
+  };
+
+  function findAndModifyPromise(collection, stock, ip) {
+    return new Promise(function(resolve, reject) {
+      collection.findAndModify(
+              { stock: stock },
+              [],
+              { $addToSet: { likes: ip } },
+              { new: true, upsert: true },
+              function(err, doc) {
+                resolve({stock: stock, likes: doc.value.likes.length});
+              }
+            );
+    });
+  };
+
+  function findPromise(collection, stock) {
+    return new Promise(function(resolve, reject) {
+        collection.find({stock:stock}).toArray((err, docs) => {
+        var like = 0;
+        if (docs.length) {
+          let likesArr = docs[0].likes;
+          like = docs[0].likes.length;
+        }
+        resolve({stock: stock, likes: like});
+        });
+      });
   };
 
 };
